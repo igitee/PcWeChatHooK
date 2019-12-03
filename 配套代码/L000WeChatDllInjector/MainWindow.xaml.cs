@@ -261,17 +261,14 @@ namespace L000WeChatDllInjector
         {
             //如果当前系统中，微信在运行，则重启微信
             String WxPath = "";
-            Process[] processes = Process.GetProcesses();
+            Process[] processes = Process.GetProcessesByName("WeChat");
             foreach (Process process in processes)
             {
-                if (process.ProcessName.ToLower() == "WeChat".ToLower())
+                if (WxPath == "")
                 {
-                    if (WxPath == "")
-                    {
-                        WxPath = process.MainModule.FileName;
-                    }
-                    process.Kill();
+                    WxPath = process.MainModule.FileName;
                 }
+                process.Kill();
             }
 
             //启动微信
@@ -283,12 +280,16 @@ namespace L000WeChatDllInjector
                 try
                 {
                     RegistryKey registryKey = Registry.CurrentUser;
-                    RegistryKey software = registryKey.OpenSubKey("Software\\Tencent\\WeChat");
+                    RegistryKey software = registryKey.OpenSubKey("Software\\Tencent\\WeChat",true);
                     object InstallPath = software.GetValue("InstallPath");
                     WxPath = InstallPath.ToString() + "\\WeChat.exe";
+
+                    //NeedUpdateType 设置低于100，禁止自动升级
+                    software.SetValue("NeedUpdateType", 80);
+
                     registryKey.Close();
                 }
-                catch
+                catch(Exception ex)
                 {
                     WxPath = "";
                 }
